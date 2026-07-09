@@ -1,0 +1,90 @@
+<idea-plugin>
+    <id>br.com.puerari.claudetecommitmessage</id>
+    <name>Claudete Commit Message</name>
+    <vendor email="solutions@puerari.com.br" url="https://github.com/puerari/claudete-commit-message">Puerari Solutions</vendor>
+
+    <description><![CDATA[
+        <p><b>Write better Git commit messages in one click</b> &mdash; right inside your JetBrains
+        IDE, powered by the <b>Claude Code CLI</b>.</p>
+
+        <p>Check the files you're about to commit, click the <b>Claude</b> button in the
+        commit&#8209;message toolbar (or press <code>Ctrl+Alt+K</code>), and a clean, conventional
+        commit message is written straight into the message field. The plugin builds a diff of
+        <em>exactly</em> the changes you selected, sends it to <code>claude</code>, and fills in the
+        result &mdash; in the background and cancelable at any time.</p>
+
+        <h3>&#10024; Highlights</h3>
+        <ul>
+            <li><b>One click, right where you commit</b> &mdash; the action lives in the
+            commit&#8209;message toolbar.</li>
+            <li><b>Conventional Commits</b> by default, with a fully editable prompt.</li>
+            <li><b>Cancelable</b> &mdash; the icon turns into a red stop square while generating;
+            click it to abort.</li>
+            <li><b>Selection&#8209;aware</b> &mdash; includes checked unversioned files as new&#8209;file
+            diffs; the button is enabled only when files are selected.</li>
+            <li><b>WSL&#8209;friendly</b> &mdash; run the CLI inside WSL from a native&#8209;Windows IDE,
+            with a distro picker.</li>
+            <li><b>Model picker</b> &mdash; Claude aliases (<code>sonnet</code>, <code>opus</code>,
+            <code>haiku</code>, <code>fable</code>) or a full model name.</li>
+            <li><b>Painless setup</b> &mdash; auto&#8209;detect the <code>claude</code> executable and run
+            a built&#8209;in integration test from Settings.</li>
+        </ul>
+
+        <h3>&#128640; Getting started</h3>
+        <ol>
+            <li>Install and authenticate the <b>Claude Code CLI</b> (run <code>claude</code> once in a
+            terminal).</li>
+            <li>Open <b>Settings &rarr; Tools &rarr; Claudete Commit Message</b>, click <b>Detect</b>, then
+            <b>Test integration</b>.</li>
+            <li>In the <b>Commit</b> tool window, select files and click the <b>Claude</b> button
+            (or <code>Ctrl+Alt+K</code>).</li>
+        </ol>
+
+        <p><b>Requirements:</b> the Claude Code CLI installed and authenticated. Works with
+        <b>PhpStorm</b>, <b>PyCharm</b>, IntelliJ&nbsp;IDEA, and other IntelliJ&#8209;based IDEs.</p>
+
+        <p><b>Privacy:</b> when you generate a message, the diff of your selected changes is sent to
+        Anthropic through your own Claude Code CLI and authentication. The plugin itself collects no
+        telemetry. This plugin is an independent integration and is not affiliated with or endorsed
+        by Anthropic.</p>
+    ]]></description>
+
+    <change-notes><![CDATA[
+        <p><b>0.1.0</b></p>
+        <ul>
+            <li>Generate commit messages from the selected files using the Claude Code CLI.</li>
+            <li>Toolbar button and <code>Ctrl+Alt+K</code> shortcut; cancelable stop toggle.</li>
+            <li>WSL mode with distro picker; model picker; executable auto&#8209;detection; built&#8209;in
+            integration test.</li>
+            <li>Includes unversioned files; the action is enabled only when files are selected.</li>
+        </ul>
+    ]]></change-notes>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.vcs</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="br.com.puerari.claudetecommitmessage.ClaudeCommitSettings"/>
+        <applicationConfigurable
+                parentId="tools"
+                id="br.com.puerari.claudetecommitmessage.settings"
+                displayName="Claudete Commit Message"
+                instance="br.com.puerari.claudetecommitmessage.ClaudeCommitConfigurable"/>
+        <notificationGroup id="Claudete Commit Message" displayType="BALLOON"/>
+    </extensions>
+
+    <actions>
+        <action id="ClaudeCommit.Generate"
+                class="br.com.puerari.claudetecommitmessage.GenerateCommitMessageAction"
+                text="Generate Commit Message with Claude"
+                description="Generate a commit message from the selected files using the Claude Code CLI"
+                icon="/icons/generate.svg">
+            <!-- Barra do campo de mensagem de commit. Fica logo APÓS o botão do AI Assistant
+                 (Vcs.LLMCommitMessageAction) quando ele existir; caso contrário, a plataforma
+                 anexa a ação ao fim do grupo (sem erro) — mesmo efeito de anchor="last". -->
+            <add-to-group group-id="Vcs.MessageActionGroup"
+                          relative-to-action="Vcs.LLMCommitMessageAction" anchor="after"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="control alt K"/>
+        </action>
+    </actions>
+</idea-plugin>

@@ -1,0 +1,27 @@
+# Build / caches
+.gradle/
+build/
+out/
+.kotlin/
+.intellijPlatform/
+
+# IDE
+*.iml
+.idea/
+.qodana/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Segredos de assinatura do plugin — NUNCA commitar
+*.pem
+*.crt
+*.p12
+*.pfx
+*.key
+secrets/
+local.properties
+
+# Mantém o jar do Gradle wrapper versionado
+!gradle/wrapper/gradle-wrapper.jar
