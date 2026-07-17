@@ -50,6 +50,11 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p><b>0.1.2</b></p>
+        <ul>
+            <li>Replaced the deprecated <code>ReadAction.compute</code> API with a
+            cancellable non&#8209;blocking read action, for compatibility with 2026.1+.</li>
+        </ul>
         <p><b>0.1.1</b></p>
         <ul>
             <li>All UI, status, and notification messages are now in English.</li>

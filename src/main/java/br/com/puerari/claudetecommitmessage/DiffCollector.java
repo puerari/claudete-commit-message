@@ -17,6 +17,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 /**
  * Monta um diff unificado (formato git) a partir das mudanças selecionadas na ferramenta
@@ -48,7 +49,14 @@ final class DiffCollector {
         String basePath = project.getBasePath();
         final Path base = Paths.get(basePath != null ? basePath : System.getProperty("user.dir"));
 
-        String diff = ReadAction.compute(() -> {
+        // A montagem do diff lê estado do VCS/PSI e precisa de uma read action. Estamos numa
+        // thread de background (Task.Backgroundable), então usamos nonBlocking(...) —
+        // executeSynchronously() bloqueia até concluir, mas de forma cancelável (lança
+        // ProcessCanceledException, tratada pelo chamador) e reexecutável se uma write action
+        // interromper. O cálculo é puro/idempotente (só lê e escreve num StringWriter local),
+        // então é seguro repeti-lo. Substitui ReadAction.compute(ThrowableComputable), removido
+        // da API recomendada (deprecado a partir do build 261).
+        Callable<String> computeDiff = () -> {
             List<Change> all = new ArrayList<>(changes);
             if (unversionedFiles != null) {
                 for (FilePath fp : unversionedFiles) {
@@ -64,7 +72,9 @@ final class DiffCollector {
             StringWriter writer = new StringWriter();
             UnifiedDiffWriter.write(project, patches, writer, "\n", null);
             return writer.toString();
-        });
+        };
+
+        String diff = ReadAction.nonBlocking(computeDiff).executeSynchronously();
 
         if (diff == null) {
             return "";
