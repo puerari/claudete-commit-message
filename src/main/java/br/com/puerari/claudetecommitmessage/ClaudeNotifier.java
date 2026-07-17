@@ -30,7 +30,7 @@ final class ClaudeNotifier {
     /** Notificação de erro com um atalho para abrir a tela de configurações do plugin. */
     static void errorWithSettings(@Nullable Project project, String content) {
         Notification notification = create(content, NotificationType.ERROR);
-        notification.addAction(NotificationAction.createSimple("Abrir configurações", () ->
+        notification.addAction(NotificationAction.createSimple("Open settings", () ->
                 ShowSettingsUtil.getInstance()
                         .showSettingsDialog(project, ClaudeCommitConfigurable.class)));
         notification.notify(project);

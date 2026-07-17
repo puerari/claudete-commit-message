@@ -67,25 +67,25 @@ final class ClaudeCliRunner {
         if (settings.useWsl) {
             String wsl = resolveWslExe();
             if (wsl == null) {
-                return Result.error("wsl.exe não encontrado. Verifique se o WSL está instalado.");
+                return Result.error("wsl.exe not found. Check whether WSL is installed.");
             }
             cmd = new GeneralCommandLine(wsl);
             appendWslPrefix(cmd, settings.wslDistro);
             appendClaudeInvocation(cmd, wslClaudeCommand(settings.claudePath), settings);
-            label = "o Claude Code (via WSL)";
+            label = "Claude Code (via WSL)";
         } else {
             String exe = resolveExecutable(settings.claudePath);
             if (exe == null) {
                 return Result.error(
-                        "Executável do Claude Code não encontrado. Instale a CLI e/ou informe o " +
-                        "caminho em Settings → Tools → Claudete Commit Message.");
+                        "Claude Code executable not found. Install the CLI and/or provide the " +
+                        "path in Settings → Tools → Claudete Commit Message.");
             }
             cmd = new GeneralCommandLine(exe);
             if (workingDir != null && new File(workingDir).isDirectory()) {
                 cmd.withWorkDirectory(workingDir);
             }
             appendClaudeInvocation(cmd, List.of(exe), settings);
-            label = "o Claude Code (" + exe + ")";
+            label = "Claude Code (" + exe + ")";
         }
 
         // CONSOLE herda o ambiente do shell de login do usuário (PATH, HOME, etc.),
@@ -173,7 +173,7 @@ final class ClaudeCliRunner {
         try {
             process = cmd.createProcess();
         } catch (Exception e) {
-            return Result.error("Falha ao iniciar " + label + ": " + e.getMessage());
+            return Result.error("Failed to start " + label + ": " + e.getMessage());
         }
 
         // Escreve o stdin em uma thread separada para evitar deadlock quando o conteúdo é
@@ -206,7 +206,7 @@ final class ClaudeCliRunner {
                 }
                 if (System.currentTimeMillis() - start > timeoutMs) {
                     process.destroyForcibly();
-                    return Result.error("Tempo esgotado aguardando " + label + ".");
+                    return Result.error("Timed out waiting for " + label + ".");
                 }
             }
         } catch (InterruptedException e) {
@@ -222,7 +222,7 @@ final class ClaudeCliRunner {
 
         if (exitCode != 0) {
             String detail = stderr.isBlank() ? stdout : stderr;
-            return Result.error(label + " retornou código " + exitCode
+            return Result.error(label + " returned exit code " + exitCode
                     + (detail.isBlank() ? "." : ": " + detail.trim()));
         }
         return Result.ok(stdout);
@@ -279,7 +279,7 @@ final class ClaudeCliRunner {
 
     /**
      * Detecção automática pura (ignora qualquer caminho já informado): procura no PATH e nos
-     * locais de instalação padrão. Usada pelo botão "Detectar" para SEMPRE reescrever o campo.
+     * locais de instalação padrão. Usada pelo botão "Detect" para SEMPRE reescrever o campo.
      */
     @Nullable
     static String autoDetectExecutable() {
@@ -367,7 +367,7 @@ final class ClaudeCliRunner {
         cmd.addParameters("-l", "-q");
         cmd.withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE);
         cmd.withEnvironment("WSL_UTF8", "1");
-        Result r = execute(cmd, null, null, 15_000L, "a listagem de distros do WSL");
+        Result r = execute(cmd, null, null, 15_000L, "the WSL distro listing");
 
         List<String> distros = new ArrayList<>();
         if (r.ok && r.output != null) {
@@ -385,7 +385,7 @@ final class ClaudeCliRunner {
     /**
      * Sonda o WSL pelo caminho do claude via {@code command -v claude}, usando o mesmo PATH
      * da execução. SEMPRE sonda (ignora qualquer caminho já informado), de modo que o botão
-     * "Detectar" reescreva o campo.
+     * "Detect" reescreva o campo.
      *
      * @return o caminho no WSL, ou {@code null} se não encontrado.
      */
@@ -401,7 +401,7 @@ final class ClaudeCliRunner {
         cmd.addParameter("-c");
         cmd.addParameter(WSL_PATH_SETUP + "command -v claude");
         cmd.withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE);
-        Result r = execute(cmd, null, null, 15_000L, "a sonda do WSL");
+        Result r = execute(cmd, null, null, 15_000L, "the WSL probe");
         if (r.ok && r.output != null) {
             for (String line : r.output.split("\\r?\\n")) {
                 String p = line.trim();
@@ -427,7 +427,7 @@ final class ClaudeCliRunner {
         probe.model = settings.model;
         probe.additionalArgs = settings.additionalArgs;
         probe.timeoutSeconds = Math.max(15, Math.min(settings.timeoutSeconds, 90));
-        probe.promptTemplate = "Responda com exatamente a palavra CLAUDE_OK e nada mais.";
+        probe.promptTemplate = "Reply with exactly the word CLAUDE_OK and nothing else.";
         return run(probe, null, "", null);
     }
 

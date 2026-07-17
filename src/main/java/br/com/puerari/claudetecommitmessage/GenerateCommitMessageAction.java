@@ -59,13 +59,13 @@ public final class GenerateCommitMessageAction extends AnAction {
 
         if (running) {
             presentation.setIcon(STOP_ICON);
-            presentation.setText("Parar geração da mensagem");
-            presentation.setDescription("Cancelar a geração da mensagem de commit");
+            presentation.setText("Stop Message Generation");
+            presentation.setDescription("Cancel the commit message generation");
             presentation.setEnabled(true);
         } else {
             presentation.setIcon(GENERATE_ICON);
-            presentation.setText("Gerar mensagem de commit com o Claude");
-            presentation.setDescription("Gerar a mensagem a partir dos arquivos selecionados usando a CLI do Claude Code");
+            presentation.setText("Generate Commit Message with Claude");
+            presentation.setDescription("Generate the message from the selected files using the Claude Code CLI");
             // Habilita apenas quando há ao menos um arquivo marcado para o commit.
             presentation.setEnabled(project != null && hasSelectedFiles(e.getDataContext()));
         }
@@ -132,11 +132,11 @@ public final class GenerateCommitMessageAction extends AnAction {
         }
 
         if (messageSetter == null) {
-            ClaudeNotifier.error(project, "Não foi possível acessar o campo de mensagem de commit.");
+            ClaudeNotifier.error(project, "Could not access the commit message field.");
             return;
         }
         if (changes.isEmpty() && unversioned.isEmpty()) {
-            ClaudeNotifier.warn(project, "Selecione ao menos um arquivo para incluir no commit.");
+            ClaudeNotifier.warn(project, "Select at least one file to include in the commit.");
             return;
         }
 
@@ -146,9 +146,9 @@ public final class GenerateCommitMessageAction extends AnAction {
         // de iniciar a tarefa e falhar silenciosamente.
         if (!settings.useWsl && ClaudeCliRunner.resolveExecutable(settings.claudePath) == null) {
             ClaudeNotifier.errorWithSettings(project,
-                    "CLI do Claude Code não encontrada no sistema. Se o Claude está instalado no "
-                    + "WSL, ative \"Executar via WSL\" nas configurações; caso contrário, informe o "
-                    + "caminho do executável.");
+                    "Claude Code CLI not found on this system. If Claude is installed in WSL, "
+                    + "enable \"Run via WSL\" in the settings; otherwise, provide the path to the "
+                    + "executable.");
             return;
         }
 
@@ -158,16 +158,19 @@ public final class GenerateCommitMessageAction extends AnAction {
         }
         requestToolbarUpdate();
 
+        // Limpa o campo de mensagem: a geração começa do zero, sem restos da mensagem anterior.
+        messageSetter.accept("");
+
         final String workingDir = project.getBasePath();
 
-        new Task.Backgroundable(project, "Gerando mensagem de commit com o Claude", true) {
+        new Task.Backgroundable(project, "Generating commit message with Claude", true) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
                 manager.attachIndicator(indicator);
                 requestToolbarUpdate();
 
                 indicator.setIndeterminate(true);
-                indicator.setText("Coletando o diff das mudanças selecionadas…");
+                indicator.setText("Collecting the diff of the selected changes…");
 
                 String diff;
                 try {
@@ -175,17 +178,17 @@ public final class GenerateCommitMessageAction extends AnAction {
                 } catch (ProcessCanceledException pce) {
                     throw pce;
                 } catch (Exception ex) {
-                    ClaudeNotifier.error(project, "Falha ao montar o diff: " + ex.getMessage());
+                    ClaudeNotifier.error(project, "Failed to build the diff: " + ex.getMessage());
                     return;
                 }
 
                 if (diff.isBlank()) {
                     ClaudeNotifier.warn(project,
-                            "Nenhuma alteração textual encontrada nos arquivos selecionados.");
+                            "No textual changes found in the selected files.");
                     return;
                 }
 
-                indicator.setText("Consultando o Claude Code…");
+                indicator.setText("Querying Claude Code…");
                 ClaudeCliRunner.Result result =
                         ClaudeCliRunner.run(settings, workingDir, diff, indicator);
 
@@ -198,7 +201,7 @@ public final class GenerateCommitMessageAction extends AnAction {
 
                 String message = cleanUp(result.output);
                 if (message.isBlank()) {
-                    ClaudeNotifier.error(project, "O Claude Code não retornou nenhuma mensagem.");
+                    ClaudeNotifier.error(project, "Claude Code returned no message.");
                     return;
                 }
 
@@ -210,7 +213,7 @@ public final class GenerateCommitMessageAction extends AnAction {
 
             @Override
             public void onCancel() {
-                ClaudeNotifier.info(project, "Geração da mensagem cancelada.");
+                ClaudeNotifier.info(project, "Message generation canceled.");
             }
 
             @Override

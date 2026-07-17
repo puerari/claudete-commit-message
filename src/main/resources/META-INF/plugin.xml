@@ -50,6 +50,11 @@
     ]]></description>
 
     <change-notes><![CDATA[
+        <p><b>0.1.1</b></p>
+        <ul>
+            <li>All UI, status, and notification messages are now in English.</li>
+            <li>The message field is cleared when a new generation starts, so no stale text remains.</li>
+        </ul>
         <p><b>0.1.0</b></p>
         <ul>
             <li>Generate commit messages from the selected files using the Claude Code CLI.</li>

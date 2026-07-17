@@ -64,10 +64,10 @@ public final class ClaudeCommitConfigurable implements Configurable {
     public @Nullable JComponent createComponent() {
         // --- Caminho do executável + Procurar + Detectar ---
         pathField = new JBTextField();
-        pathField.getEmptyText().setText("Detecção automática (PATH + locais de instalação padrão)");
-        browseButton = new JButton("Procurar…");
+        pathField.getEmptyText().setText("Auto-detect (PATH + default install locations)");
+        browseButton = new JButton("Browse…");
         browseButton.addActionListener(ev -> browseForExecutable());
-        detectButton = new JButton("Detectar");
+        detectButton = new JButton("Detect");
         detectButton.addActionListener(ev -> detectAsync());
         JPanel pathButtons = new JPanel(new BorderLayout(JBUI.scale(6), 0));
         pathButtons.add(browseButton, BorderLayout.WEST);
@@ -79,47 +79,47 @@ public final class ClaudeCommitConfigurable implements Configurable {
         detectedLabel.setForeground(JBColor.GRAY);
 
         // --- WSL ---
-        wslCheck = new JBCheckBox("Executar via WSL (PhpStorm/PyCharm nativo do Windows com o Claude no WSL)");
+        wslCheck = new JBCheckBox("Run via WSL (native Windows PhpStorm/PyCharm with Claude in WSL)");
         wslCheck.addActionListener(ev -> updateWslEnabled());
         distroCombo = new ComboBox<>();
         distroCombo.setEditable(true);
-        loadDistrosButton = new JButton("Carregar");
+        loadDistrosButton = new JButton("Load");
         loadDistrosButton.addActionListener(ev -> loadDistrosAsync());
         JPanel distroRow = new JPanel(new BorderLayout(JBUI.scale(6), 0));
         distroRow.add(distroCombo, BorderLayout.CENTER);
         distroRow.add(loadDistrosButton, BorderLayout.EAST);
-        distroStatusLabel = new JBLabel("Marque \"Executar via WSL\" e clique em Carregar para listar as distros.");
+        distroStatusLabel = new JBLabel("Check \"Run via WSL\" and click Load to list the distros.");
         distroStatusLabel.setForeground(JBColor.GRAY);
 
         // --- Modelo (aliases sugeridos; editável) ---
         modelCombo = new ComboBox<>(MODEL_SUGGESTIONS);
         modelCombo.setEditable(true);
         JBLabel modelHint = new JBLabel(
-                "Aliases (sonnet/opus/haiku/fable) seguem o modelo mais recente; ou digite um nome completo. Vazio = padrão da CLI.");
+                "Aliases (sonnet/opus/haiku/fable) track the latest model; or type a full name. Empty = CLI default.");
         modelHint.setForeground(JBColor.GRAY);
 
         // --- Demais campos ---
         argsField = new JBTextField();
-        argsField.getEmptyText().setText("Argumentos adicionais para a CLI (opcional)");
+        argsField.getEmptyText().setText("Additional CLI arguments (optional)");
         timeoutField = new JBTextField();
 
         // --- Testar integração ---
-        testButton = new JButton("Testar integração");
+        testButton = new JButton("Test integration");
         testButton.addActionListener(ev -> testAsync());
-        testStatusLabel = new JBLabel("Faz uma chamada mínima ao Claude para validar executável, execução e autenticação.");
+        testStatusLabel = new JBLabel("Makes a minimal call to Claude to validate the executable, execution, and authentication.");
         testStatusLabel.setForeground(JBColor.GRAY);
         JPanel testRow = new JPanel(new BorderLayout(JBUI.scale(8), 0));
         testRow.add(testButton, BorderLayout.WEST);
         testRow.add(testStatusLabel, BorderLayout.CENTER);
 
         // --- Prompt + Restaurar padrão ---
-        JButton resetPromptButton = new JButton("Restaurar padrão");
+        JButton resetPromptButton = new JButton("Restore default");
         resetPromptButton.addActionListener(ev -> {
             promptArea.setText(ClaudeCommitSettings.DEFAULT_PROMPT);
             promptArea.setCaretPosition(0);
         });
         JPanel promptHeader = new JPanel(new BorderLayout(JBUI.scale(6), 0));
-        promptHeader.add(new JBLabel("Prompt enviado ao Claude (o diff é enviado pela entrada padrão):"),
+        promptHeader.add(new JBLabel("Prompt sent to Claude (the diff is sent via standard input):"),
                 BorderLayout.CENTER);
         promptHeader.add(resetPromptButton, BorderLayout.EAST);
 
@@ -130,15 +130,15 @@ public final class ClaudeCommitConfigurable implements Configurable {
         promptScroll.setPreferredSize(new Dimension(JBUI.scale(520), JBUI.scale(220)));
 
         root = FormBuilder.createFormBuilder()
-                .addLabeledComponent(new JBLabel("Caminho do executável do Claude:"), pathRow, 1, false)
+                .addLabeledComponent(new JBLabel("Claude executable path:"), pathRow, 1, false)
                 .addComponentToRightColumn(detectedLabel, 1)
                 .addComponent(wslCheck)
-                .addLabeledComponent(new JBLabel("Distro do WSL:"), distroRow, 1, false)
+                .addLabeledComponent(new JBLabel("WSL distro:"), distroRow, 1, false)
                 .addComponentToRightColumn(distroStatusLabel, 1)
-                .addLabeledComponent(new JBLabel("Modelo:"), modelCombo, 1, false)
+                .addLabeledComponent(new JBLabel("Model:"), modelCombo, 1, false)
                 .addComponentToRightColumn(modelHint, 1)
-                .addLabeledComponent(new JBLabel("Argumentos adicionais:"), argsField, 1, false)
-                .addLabeledComponent(new JBLabel("Timeout (segundos):"), timeoutField, 1, false)
+                .addLabeledComponent(new JBLabel("Additional arguments:"), argsField, 1, false)
+                .addLabeledComponent(new JBLabel("Timeout (seconds):"), timeoutField, 1, false)
                 .addComponent(testRow)
                 .addSeparator()
                 .addComponent(promptHeader)
@@ -159,7 +159,7 @@ public final class ClaudeCommitConfigurable implements Configurable {
     /** Abre o seletor de arquivos para escolher o executável do claude. */
     private void browseForExecutable() {
         FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false)
-                .withTitle("Selecione o executável do Claude Code");
+                .withTitle("Select the Claude Code executable");
         VirtualFile file = FileChooser.chooseFile(descriptor, null, null);
         if (file != null) {
             pathField.setText(toWslPathIfApplicable(file.getPath()));
@@ -195,7 +195,7 @@ public final class ClaudeCommitConfigurable implements Configurable {
 
         detectButton.setEnabled(false);
         detectedLabel.setForeground(JBColor.GRAY);
-        detectedLabel.setText("Detectando…");
+        detectedLabel.setText("Detecting…");
 
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             // Detectar SEMPRE reescreve o campo: no WSL re-sonda; no nativo, procura no
@@ -204,8 +204,8 @@ public final class ClaudeCommitConfigurable implements Configurable {
                     ? ClaudeCliRunner.probeWslClaudePath(distro)
                     : ClaudeCliRunner.autoDetectExecutable();
             final String message = resolved != null
-                    ? (useWsl ? "Encontrado no WSL: " : "Encontrado: ") + resolved
-                    : "Não encontrado. Informe o caminho manualmente ou use Procurar…";
+                    ? (useWsl ? "Found in WSL: " : "Found: ") + resolved
+                    : "Not found. Enter the path manually or use Browse…";
 
             ApplicationManager.getApplication().invokeLater(() -> {
                 if (resolved != null) {
@@ -224,14 +224,14 @@ public final class ClaudeCommitConfigurable implements Configurable {
     private void loadDistrosAsync() {
         loadDistrosButton.setEnabled(false);
         distroStatusLabel.setForeground(JBColor.GRAY);
-        distroStatusLabel.setText("Carregando distros do WSL…");
+        distroStatusLabel.setText("Loading WSL distros…");
 
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             final List<String> distros = ClaudeCliRunner.listWslDistros();
             ApplicationManager.getApplication().invokeLater(() -> {
                 if (distros.isEmpty()) {
                     distroStatusLabel.setForeground(JBColor.RED);
-                    distroStatusLabel.setText("Nenhuma distro encontrada (WSL instalado? Isto só funciona no Windows).");
+                    distroStatusLabel.setText("No distro found (is WSL installed? This only works on Windows).");
                 } else {
                     String current = comboText(distroCombo);
                     distroCombo.removeAllItems();
@@ -241,7 +241,7 @@ public final class ClaudeCommitConfigurable implements Configurable {
                     }
                     setComboText(distroCombo, current);
                     distroStatusLabel.setForeground(JBColor.GRAY);
-                    distroStatusLabel.setText(distros.size() + " distro(s) encontrada(s).");
+                    distroStatusLabel.setText(distros.size() + " distro(s) found.");
                 }
                 loadDistrosButton.setEnabled(wslCheck.isSelected());
             }, ModalityState.any());
@@ -260,17 +260,17 @@ public final class ClaudeCommitConfigurable implements Configurable {
 
         testButton.setEnabled(false);
         testStatusLabel.setForeground(JBColor.GRAY);
-        testStatusLabel.setText("Testando integração com o Claude… (pode levar alguns segundos)");
+        testStatusLabel.setText("Testing the integration with Claude… (this may take a few seconds)");
 
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             final ClaudeCliRunner.Result r = ClaudeCliRunner.testIntegration(snapshot);
             ApplicationManager.getApplication().invokeLater(() -> {
                 if (r.ok) {
                     testStatusLabel.setForeground(JBColor.GRAY);
-                    testStatusLabel.setText("✔ Integração OK — o Claude respondeu.");
+                    testStatusLabel.setText("✔ Integration OK — Claude responded.");
                 } else {
                     testStatusLabel.setForeground(JBColor.RED);
-                    testStatusLabel.setText("✘ Falha: " + shorten(r.error));
+                    testStatusLabel.setText("✘ Failed: " + shorten(r.error));
                 }
                 testButton.setEnabled(true);
             }, ModalityState.any());
@@ -287,7 +287,7 @@ public final class ClaudeCommitConfigurable implements Configurable {
 
     private static String shorten(String s) {
         if (s == null) {
-            return "erro desconhecido.";
+            return "unknown error.";
         }
         String t = s.strip();
         return t.length() > 220 ? t.substring(0, 220) + "…" : t;
@@ -313,15 +313,15 @@ public final class ClaudeCommitConfigurable implements Configurable {
         try {
             timeout = Integer.parseInt(timeoutField.getText().trim());
         } catch (NumberFormatException e) {
-            throw new ConfigurationException("O timeout deve ser um número inteiro (segundos).");
+            throw new ConfigurationException("The timeout must be an integer number (seconds).");
         }
         if (timeout <= 0) {
-            throw new ConfigurationException("O timeout deve ser maior que zero.");
+            throw new ConfigurationException("The timeout must be greater than zero.");
         }
 
         String prompt = promptArea.getText();
         if (prompt.isBlank()) {
-            throw new ConfigurationException("O prompt não pode ficar vazio.");
+            throw new ConfigurationException("The prompt cannot be empty.");
         }
 
         s.claudePath = pathField.getText().trim();

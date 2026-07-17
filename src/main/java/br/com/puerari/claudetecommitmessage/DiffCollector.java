@@ -71,7 +71,7 @@ final class DiffCollector {
         }
         if (diff.length() > MAX_DIFF_CHARS) {
             diff = diff.substring(0, MAX_DIFF_CHARS)
-                    + "\n\n[... diff truncado por exceder " + MAX_DIFF_CHARS + " caracteres ...]";
+                    + "\n\n[... diff truncated for exceeding " + MAX_DIFF_CHARS + " characters ...]";
         }
         return diff;
     }

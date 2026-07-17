@@ -25,6 +25,20 @@ mensagem (grupo de ação `Vcs.MessageActionGroup`) + atalho `Ctrl+Alt+K`.
 - Instalação: **Settings → Plugins → ⚙ → Install Plugin from Disk** → selecione o `.zip` → reiniciar.
 - Runtime do usuário: **PhpStorm nativo do Windows**, com o Claude Code no **WSL (Ubuntu)**. O zip é acessível pelo Windows em `\\wsl.localhost\Ubuntu\home\puerari\dev\plugins\claude_commit\build\distributions\`.
 
+## Assinatura & publicação (Marketplace)
+
+> Interface principal: **`Makefile`** (`make help` lista tudo). Alvos: `build`, `verify`,
+> `sign`, `publish`, e os unificados `dist` (compila+verifica+assina) e `release` (idem +
+> publica). Fluxo completo e detalhes na skill de projeto **`publish-plugin`**
+> (`.claude/skills/publish-plugin/SKILL.md`). Resumo do essencial:
+
+- **Certificado na raiz do projeto** (autoassinado, criado 2026-07-09, ignorado pelo `.gitignore` via `*.pem`/`*.crt`): `chain.crt` (cadeia X.509) + `private.pem` (chave RSA **com senha**). A **senha não fica salva em lugar nenhum** — sempre **pedir ao usuário**; nunca persistir em arquivo.
+- `buildPlugin` **não** assina. Forma padrão: **`./sign.sh`** (na raiz) — lê `chain.crt`/`private.pem`, **pergunta só a senha** (sem eco/histórico/gravação), valida-a e roda `signPlugin`. `./sign.sh --publish` assina e publica (exige `PUBLISH_TOKEN`). Gera `build/distributions/claudete-commit-message-<versão>-signed.zip`.
+  - Manual (equivalente): exportar `CERTIFICATE_CHAIN="$(cat chain.crt)"`, `PRIVATE_KEY="$(cat private.pem)"`, `PRIVATE_KEY_PASSWORD='…'` e `./gradlew signPlugin`.
+- Antes de publicar: **`./gradlew verifyPlugin`** deve terminar `Compatible` (avisos `[removal]` bloqueiam; *deprecated* não). Sempre **incrementar `version`** — o Marketplace rejeita reupload da mesma versão.
+- **1ª publicação** = upload manual do `-signed.zip` em <https://plugins.jetbrains.com> (passa por review humano). **Versões seguintes** = `make release` / `./gradlew publishPlugin` com `PUBLISH_TOKEN` (My Tokens no perfil do Marketplace).
+- **`PUBLISH_TOKEN` vem do `.env`** (não versionado; template em `.env.example`), carregado automaticamente pelo `sign.sh`. Variável já exportada no shell tem prioridade sobre o `.env`. Nunca commitar `.env` (já no `.gitignore`).
+
 ## Plataforma-alvo
 
 - Compilado contra `intellijIdeaCommunity("2025.2")` (build **252**) — última versão com o artefato clássico "IC". Desde 253 a JetBrains unificou a distribuição; `intellijIdea("2026.1")` resolve mas o layout modular novo **não montou o classpath base** com o tooling atual (evitar por enquanto).
@@ -51,5 +65,6 @@ mensagem (grupo de ação `Vcs.MessageActionGroup`) + atalho `Ctrl+Alt+K`.
 
 ## Convenções
 
-- Java puro (sem Kotlin). Comentários e textos de UI/notificação em **pt-BR**; identificadores e ids de ação em inglês.
+- Java puro (sem Kotlin). Comentários em **pt-BR**; textos de UI/notificação (botões, labels, status,
+  progresso, erros) em **inglês**, assim como identificadores e ids de ação.
 - Autor/vendor: **Puerari Solutions** (`solutions@puerari.com.br`).
